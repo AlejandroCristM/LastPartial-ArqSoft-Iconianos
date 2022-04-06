@@ -2,31 +2,26 @@
 
 namespace App\Services;
 
+use App\Models\Order;
+use Illuminate\Support\Arr;
+
 class OrderService
 {
-    private function _client($F5srv) {
-        $opts = array(
-            'ssl' => array(
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'allow_self_signed' => true
-            )
-        );
+    public function queryOrder(int $order): Order
+    {
+        return Order::with(['restaurant', 'customer'])->findOrFail($order);
+    }
 
-        $context = stream_context_create($opts);
-        $wsdl = "wsdl path";
+    public function storeOrder(array $data): Order
+    {
+        $order = new Order();
+        $order->reference = Arr::get($data, 'reference');
+        $order->description = Arr::get($data, 'description');
+        $order->amount = Arr::get($data, 'amount');
+        $order->customer_id = Arr::get($data, 'customer_id');
+        $order->restaurant_id = Arr::get($data, 'restaurant_id');
+        $order->save();
 
-        try {
-            $this->client = new \SoapClient($wsdl, array(
-                    'stream_context' => $context, 'trace' => true,
-                    'login' => username, 'password' => password)
-            );
-
-            return $this->client;
-        }
-
-        catch ( \Exception $e) {
-            Log::info('Caught Exception in client'. $e->getMessage());
-        }
+        return $order;
     }
 }

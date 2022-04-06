@@ -3,54 +3,27 @@
 namespace App\Handlers;
 
 use App\Contracts\BaseHandler;
+use App\Responses\CustomerResponse;
 use App\Responses\OrderResponse;
+use App\Responses\RestaurantResponse;
 use CodeDredd\Soap\Facades\Soap;
-use CodeDredd\Soap\SoapClient;
+use Illuminate\Support\Arr;
 use SoapFault;
 use stdClass;
 
 class SoapHandler extends BaseHandler
 {
-    protected $settings;
-    protected $client;
+    protected string $wsdl;
 
-    public function __construct(Settings $settings)
+    public function __construct()
     {
-        $this->settings = $settings;
+        $this->wsdl = config('soap.wsdl');
     }
-
-    public function getBillByReference(string $reference, array $additional = []): InvoiceQueryResponse
-    {
-        $result = $this->makeCall('getBillByReference', [
-            'reference' => $reference,
-        ]);
-
-        return $this->parseResponse($result->getBillByReferenceResult ?? null);
-    }
-
-    public function getBillByDebtorID(string $document, array $additional = []): InvoiceQueryResponse
-    {
-        $result = $this->makeCall('getBillByDebtorID', [
-            'debtorID' => $document,
-        ]);
-
-        return $this->parseResponse($result->getBillByDebtorIDResult ?? null);
-    }
-
-    public function getBillByDebtorCode(string $debtorCode, array $additional = []): InvoiceQueryResponse
-    {
-        $result = $this->makeCall('getBillByDebtorCode', [
-            'debtorCode' => $debtorCode,
-        ]);
-
-        return $this->parseResponse($result->getBillByDebtorCodeResult ?? null);
-    }
-
 
     protected function makeCall($method, $data): stdClass
     {
         try {
-            return Soap::baseWsdl()->call($method, $data);
+            return Soap::baseWsdl($this->wsdl)->call($method, $data)->object();
         } catch (SoapFault $exception) {
             return (object)[
                 $method . 'Result' => (object)[
@@ -61,46 +34,45 @@ class SoapHandler extends BaseHandler
         }
     }
 
-    protected function parseResponse(stdClass $result = null): InvoiceQueryResponse
+    protected function parseResponse(stdClass $result = null): OrderResponse
     {
         if (!$result) {
-            return InvoiceQueryResponse::empty();
+            return new OrderResponse();
         }
 
-        $data = [
-            'status' => $result->status,
-            'description' => $result->description,
-        ];
+        $restaurant = $result->restaurant;
+        $restaurant = new RestaurantResponse($restaurant->name, $restaurant->address, $restaurant->phone);
+        $customer = $result->customer;
+        $customer = new CustomerResponse($customer->name, $customer->lastname, $customer->address, $customer->phone);
 
-        if (isset($result->bills)) {
-            foreach ($result->bills as $bill) {
-                $bill = $bill[0];
-                if (isset($bill)) {
-                    $data['invoices'][] = new Invoice([
-                        'reference' => $bill->reference ?? '',
-                        'description' => $bill->description ?? '',
-                        'debtor' => $bill->debtorID ?? '',
-                        'amount' => $bill->totalAmount ?? '',
-                        'debtorCode' => $bill->debtorCode ?? '',
-                        'firstName' => $bill->debtorFirstName ?? '',
-                        'lastName' => $bill->debtorLastName ?? '',
-                    ]);
-                }
-            }
-        }
-
-        return new InvoiceQueryResponse($data);
+        return new OrderResponse(
+            $result->reference,
+            $result->description,
+            $result->amount,
+            $restaurant,
+            $customer
+        );
     }
 
     public function queryOrder(int $order): OrderResponse
     {
-        $result = $this->makeCall('getBillByDebtorID', [
-            'debtorID' => $document,
+        $result = $this->makeCall('queryOrder', [
+            'order' => $order,
         ]);
+
+        return $this->parseResponse($result->queryOrderResult ?? null);
     }
 
     public function storeOrder(array $request = []): OrderResponse
     {
-        // TODO: Implement storeOrder() method.
+        $result = $this->makeCall('queryOrder', [
+            'reference' => Arr::get($request, 'reference'),
+            'restaurant_id' => Arr::get($request, 'restaurant_id'),
+            'customer_id' => Arr::get($request, 'customer_id'),
+            'description' => Arr::get($request, 'description'),
+            'amount' => Arr::get($request, 'amount'),
+        ]);
+
+        return $this->parseResponse($result->storeOrderResult ?? null);
     }
 }
