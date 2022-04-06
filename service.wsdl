@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<definitions name="domicilios" targetNamespace="http://tempuri.org/"
+             xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="http://tempuri.org/"
+             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <types>
+        <xsd:schema targetNamespace="http://tempuri.org/">
+            <xsd:complexType name="Attribute">
+                <xsd:all>
+                    <xsd:element name="name" nillable="true" type="xsd:string"/>
+                    <xsd:element name="value" nillable="true" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="ArrayOfAttribute">
+                <xsd:sequence>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="item" type="tns:Attribute"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:element name="storeOrder">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="reference" type="xsd:string"/>
+                        <xsd:element name="restaurant_id" type="xsd:string"/>
+                        <xsd:element name="customer_id" type="xsd:string"/>
+                        <xsd:element name="amount" type="xsd:string"/>
+                        <xsd:element name="description" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:complexType name="queryOrder">
+                <xsd:all>
+                    <xsd:element name="order" nillable="true" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:element name="queryOrderResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="reference" type="xsd:string"/>
+                        <xsd:element name="restaurant_id" type="xsd:string"/>
+                        <xsd:element name="customer_id" type="xsd:string"/>
+                        <xsd:element name="amount" type="xsd:string"/>
+                        <xsd:element name="description" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="storeOrderResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="reference" type="xsd:string"/>
+                        <xsd:element name="restaurant_id" type="xsd:string"/>
+                        <xsd:element name="customer_id" type="xsd:string"/>
+                        <xsd:element name="amount" type="xsd:string"/>
+                        <xsd:element name="description" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+    <portType name="domiciliosPort">
+        <operation name="queryOrder">
+            <documentation>Consultar una orden desde el id</documentation>
+            <input message="tns:queryOrderIn"/>
+            <output message="tns:queryOrderOut"/>
+        </operation>
+        <operation name="storeOrder">
+            <documentation>Crear una nueva orden</documentation>
+            <input message="tns:storeOrderIn"/>
+            <output message="tns:storeOrderOut"/>
+        </operation>
+    </portType>
+    <binding name="domiciliosBinding" type="tns:domiciliosPort">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="queryOrder">
+            <soap:operation soapAction="http://tempuri.org/#queryOrder"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="storeOrder">
+            <soap:operation soapAction="http://tempuri.org/#storeOrder"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+    <wsdl:service name="domiciliosServices">
+        <wsdl:port name="domiciliosPort" binding="tns:domiciliosBinding">
+            <soap:address location="http://127.0.0.1:8000/api/order" />
+        </wsdl:port>
+    </wsdl:service>
+    <message name="queryOrderIn">
+        <part element="tns:queryOrder" name="parameters"/>
+    </message>
+    <message name="queryOrderOut">
+        <part element="tns:queryOrderResponse" name="parameters"/>
+    </message>
+    <message name="storeOrderIn">
+        <part element="tns:getBillByDebtorID" name="parameters"/>
+    </message>
+    <message name="storeOrderOut">
+        <part element="tns:storeOrderResponse" name="parameters"/>
+    </message>
+</definitions>

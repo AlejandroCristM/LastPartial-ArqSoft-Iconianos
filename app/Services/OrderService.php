@@ -9,6 +9,7 @@ class OrderService
 {
     public function queryOrder(int $order): Order
     {
+        dd($order);
         return Order::with(['restaurant', 'customer'])->findOrFail($order);
     }
 
